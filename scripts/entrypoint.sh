@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Wait for network connectivity
-echo "Waiting for network connectivity..."
-while ! ping -c 1 -W 1 google.com >/dev/null 2>&1; do
-    sleep 1
-done
+# Simple network check - wait a few seconds
+echo "Waiting for network initialization..."
+sleep 5
 
-echo "Network is ready"
+echo "Network should be ready"
 
 # Install Chrome Driver (fallback)
 if ! command -v chromedriver &> /dev/null; then
