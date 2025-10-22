@@ -22,6 +22,6 @@ COPY . .
 RUN mkdir -p logs downloads
 
 # Make entrypoint executable
-RUN chmod +x /app/scripts/entrypont.sh
+RUN chmod +x /app/scripts/entrypoint.sh
 
 ENTRYPOINT ["/app/ascripts/entrypoint.sh"]
