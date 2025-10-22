@@ -35,3 +35,4 @@ class Config:
         return os.path.join(
             Config.DOWNLOAD_DIR,
             "nba.%Y.%m.%d.thunder.vs.%(uploader)s.%(ext)s"
+        )

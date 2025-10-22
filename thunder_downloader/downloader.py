@@ -70,7 +70,7 @@ class ThunderDownloader:
             self.logger.error(f"Error finding Thunder game: {e}")
             return False
 
-    def get_stream_links(self)
+    def get_stream_links(self):
         """Get all stream links from the game page"""
         try:
             # Wait for page to load and find stream links
