@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  thunder-downloader:
+    build: .
+    container_name: thunder-downloader
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads
+      - ./logs:/app/logs
+    environment:
+      - TZ=Europe/Dublin
