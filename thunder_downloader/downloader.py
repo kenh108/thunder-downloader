@@ -39,35 +39,63 @@ class ThunderDownloader:
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
 
-        self.drriver = webdriver.Chrome(options=chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.implicitly_wait(Config.WEBDRIVER_TIMEOUT)
         self.logger.info("Browser setup complete")
 
-    def find_thunder_game(self):
-        """Find and click the latest Thunder game"""
+    #def find_thunder_game(self):
+    #    """Find and click the latest Thunder game"""
+    #    try:
+    #        self.logger.info(f"Navigating to {Config.BASE_URL}")
+    #        self.driver.get(Config.BASE_URL)
+
+    #        # Find all game links
+    #        game_links = self.driver.find_elements(By.TAG_NAME, "a")
+
+    #        for link in game_links:
+    #            href = link.get_attribute('href') or ""
+    #            text = link.text.lower()
+
+    #            # Check if this is a Thunder game
+    #            if any(keyword in href.lower() or keyword in text
+    #                for keyword in Config.TEAM_KEYWORDS):
+    #                self.logger.info(f"Found Thunder game: {text} - {href}")
+    #                link.click()
+    #                return True
+
+    #        self.logger.error("No Thunder games found on the page")
+    #        return False
+
+    #    except Exception as e:
+    #        self.logger.error(f"Error finding Thunder game: {e}")
+    #        return False
+
+    def find_thunder_page(self):
+        """Find and click the page for Thunder games"""
         try:
             self.logger.info(f"Navigating to {Config.BASE_URL}")
             self.driver.get(Config.BASE_URL)
 
-            # Find all game links
-            game_links = self.driver.find_elements(By.TAG_NAME, "a")
+            # Find link for Thunder page
+            games_link = self.driver.find_elements(By.TAG_NAME, "a")
 
-            for link in game_links:
+            for link in games_link:
                 href = link.get_attribute('href') or ""
                 text = link.text.lower()
 
-                # Check if this is a Thunder game
+                # Check if this is related to Thunder
                 if any(keyword in href.lower() or keyword in text
                     for keyword in Config.TEAM_KEYWORDS):
-                    self.logger.info(f"Found Thunder game: {text} - {href}")
+                    # Correct link is always first on page
+                    self.logger.info(f"Found Thunder page: {text} - {href}")
                     link.click()
                     return True
 
-            self.logger.error("No Thunder games found on the page")
+            self.logger.error("Thunder page not found")
             return False
 
         except Exception as e:
-            self.logger.error(f"Error finding Thunder game: {e}")
+            self.logger.error(f"Error finding Thunder page: {e}")
             return False
 
     def get_stream_links(self):
@@ -148,7 +176,7 @@ class ThunderDownloader:
         try:
             self.setup_browser()
 
-            if not self.find_thunder_game():
+            if not self.find_thunder_page():
                 return False
 
             stream_urls = self.get_stream_links()
