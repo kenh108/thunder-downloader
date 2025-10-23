@@ -43,7 +43,7 @@ class ThunderDownloader:
         self.driver.implicitly_wait(Config.WEBDRIVER_TIMEOUT)
         self.logger.info("Browser setup complete")
 
-    def find_thunder_page(self):
+    def find_thunder_games(self):
         """Find and click the page for Thunder games"""
         try:
             self.logger.info(f"Navigating to {Config.BASE_URL}")
@@ -64,7 +64,7 @@ class ThunderDownloader:
                 if any(keyword in href.lower() or keyword in text
                     for keyword in Config.TEAM_KEYWORDS):
                     # Correct link is always first on page
-                    self.logger.info(f"Found Thunder page: {text}, navigating to: {href}")
+                    self.logger.info(f"Found Thunder page, navigating to: {href}")
                     self.driver.get(href)
                     return True
 
@@ -132,7 +132,7 @@ class ThunderDownloader:
         return any(keyword in href_lower or keyword in text_lower
                     for keyword in Config.TEAM_KEYWORDS)
 
-    def find_okru_hosted_link(self):
+    def find_okru_hosted_recording(self):
         """Find and click the Watch button for the ok.ru hosted game recording"""
         try:
             WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
@@ -162,7 +162,34 @@ class ThunderDownloader:
         except Exception as e:
             self.logger.error(f"Error finding ok.ru Watch button: {e}")
             return False
-        
+
+    def extract_okru_link(self):
+        """Extract ok.ru video URL from iframe"""
+        try:
+            WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
+                EC.presence_of_element_located((By.TAG_NAME, "a"))
+            )
+
+            # Find all iframes
+            iframes = self.driver.find_elements(By.TAG_NAME, "iframe")
+
+            for iframe in iframes:
+                src = iframe.get_attribute('src') or ""
+
+                # Check if this is an ok.ru video embed
+                if 'ok.ru/videoembed' in src:
+                    # Convert embed URL to direct video URL
+                    video_id = src.split('/')[-1]
+                    video_url = f"https://ok.ru/video/{video_id}"
+                    self.logger.info(f"Found ok.ru video: {video_url}")
+                    return video_url
+
+            self.logger.error("No ok.ru video link found")
+            return False
+
+        except Exception as e:
+            self.logger.error(f"Error finding ok.ru video link: {e}")
+            return False
 
     def download_video(self, video_url):
         """Download video using yt-dlp"""
@@ -194,16 +221,16 @@ class ThunderDownloader:
         try:
             self.setup_browser()
 
-            # Go to Thunder page
-            if not self.find_thunder_page():
+            if not self.find_thunder_games():
                 return False
             
-            # Find most recent game
             if not self.find_most_recent_game():
                 return False
 
-            # Find ok.ru link
-            video_url = self.find_okru_hosted_link()
+            if not self.find_okru_hosted_recording():
+                return False
+
+            video_url = self.extract_okru_link()
             if not video_url:
                 return False
 
