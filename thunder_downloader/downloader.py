@@ -43,38 +43,15 @@ class ThunderDownloader:
         self.driver.implicitly_wait(Config.WEBDRIVER_TIMEOUT)
         self.logger.info("Browser setup complete")
 
-    #def find_thunder_game(self):
-    #    """Find and click the latest Thunder game"""
-    #    try:
-    #        self.logger.info(f"Navigating to {Config.BASE_URL}")
-    #        self.driver.get(Config.BASE_URL)
-
-    #        # Find all game links
-    #        game_links = self.driver.find_elements(By.TAG_NAME, "a")
-
-    #        for link in game_links:
-    #            href = link.get_attribute('href') or ""
-    #            text = link.text.lower()
-
-    #            # Check if this is a Thunder game
-    #            if any(keyword in href.lower() or keyword in text
-    #                for keyword in Config.TEAM_KEYWORDS):
-    #                self.logger.info(f"Found Thunder game: {text} - {href}")
-    #                link.click()
-    #                return True
-
-    #        self.logger.error("No Thunder games found on the page")
-    #        return False
-
-    #    except Exception as e:
-    #        self.logger.error(f"Error finding Thunder game: {e}")
-    #        return False
-
     def find_thunder_page(self):
         """Find and click the page for Thunder games"""
         try:
             self.logger.info(f"Navigating to {Config.BASE_URL}")
             self.driver.get(Config.BASE_URL)
+
+            WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
+                EC.presence_of_element_located((By.TAG_NAME, "a"))
+            )
 
             # Find link for Thunder page
             games_link = self.driver.find_elements(By.TAG_NAME, "a")
@@ -88,7 +65,10 @@ class ThunderDownloader:
                     for keyword in Config.TEAM_KEYWORDS):
                     # Correct link is always first on page
                     self.logger.info(f"Found Thunder page: {text} - {href}")
-                    link.click()
+
+                    # Navigate directly to URL
+                    self.driver.get(href)
+                    self.logger.info(f"Successfully navigated to Thunder page")
                     return True
 
             self.logger.error("Thunder page not found")
@@ -97,6 +77,50 @@ class ThunderDownloader:
         except Exception as e:
             self.logger.error(f"Error finding Thunder page: {e}")
             return False
+
+    def find_new_game(self):
+        """Find and click the most recent game"""
+        try:
+            WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
+                EC.presence_of_element_located((By.TAG_NAME, "a"))
+            )
+
+            # Find all game links
+            game_links = self.driver.find_elements(By.TAG_NAME, "a")
+
+            for link in game_links:
+                href = link.get_attribute('href') or ""
+                text = link.text.strip()
+
+                if self.is_actual_game_link(href, text):
+                    self.logger.info(f"Found most recent game: {text} - {href}")
+                    link.click()
+                    return True
+
+            self.logger.error("No game links found")
+            return False
+
+        except Exception as e:
+            self.logger.error(f"Error finding game links: {e}")
+            return False
+
+    def is_actual_game_link(self, href, text):
+        """Check if this is an actual game link (not navigation page)"""
+        if not href or not text:
+            return False
+
+        href_lower = href.lower()
+        text_lower = text.lower()
+
+        # Should be a game paeg with the format: team1-vs-team2-full-game-replay-date-nba
+        is_game_page = (
+            "-vs-" in href_lower and
+            "full-game-replay" in href_lower and
+            "nba" in href_lower
+        )
+
+        return is_game_page
+
 
     def get_stream_links(self):
         """Get all stream links from the game page"""
@@ -176,19 +200,15 @@ class ThunderDownloader:
         try:
             self.setup_browser()
 
+            # Go to Thunder page
             if not self.find_thunder_page():
                 return False
-
-            stream_urls = self.get_stream_links()
-            if not stream_urls:
+            
+            # Find most recent game
+            if not self.find_new_game():
                 return False
 
-            # Try first stream link
-            video_url = self.extract_okru_video_url(stream_urls[0])
-            if not video_url:
-                return False
-
-            return self.download_video(video_url)
+            return False
 
         except Exception as e:
             self.logger.error(f"Unexpected error in run method: {e}")
