@@ -78,7 +78,7 @@ class ThunderDownloader:
             self.logger.error(f"Error finding Thunder page: {e}")
             return False
 
-    def find_new_game(self):
+    def find_most_recent_game(self):
         """Find and click the most recent game"""
         try:
             WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
@@ -92,9 +92,13 @@ class ThunderDownloader:
                 href = link.get_attribute('href') or ""
                 text = link.text.strip()
 
-                if self.is_actual_game_link(href, text):
+                # Ensure this is valid game and Thunder game
+                if (self.is_actual_game(href, text) and
+                    self.is_thunder_game(href, text)):
                     self.logger.info(f"Found most recent game: {text} - {href}")
-                    link.click()
+
+                    self.driver.get(href)
+                    self.logger.info(f"Successfully navigated to most recent game page")
                     return True
 
             self.logger.error("No game links found")
@@ -104,7 +108,7 @@ class ThunderDownloader:
             self.logger.error(f"Error finding game links: {e}")
             return False
 
-    def is_actual_game_link(self, href, text):
+    def is_actual_game(self, href, text):
         """Check if this is an actual game link (not navigation page)"""
         if not href or not text:
             return False
@@ -120,6 +124,18 @@ class ThunderDownloader:
         )
 
         return is_game_page
+
+    def is_thunder_game(self, href, text):
+        """Check if link is for a Thunder game"""
+        if not href or not text:
+            return False
+
+        href_lower = href.lower()
+        text_lower = text.lower()
+
+        # Check for Thunder keywords in the game link
+        return any(keyword in href_lower or keyword in text_lower
+                    for keyword in Config.TEAM_KEYWORDS)
 
 
     def get_stream_links(self):
@@ -205,7 +221,7 @@ class ThunderDownloader:
                 return False
             
             # Find most recent game
-            if not self.find_new_game():
+            if not self.find_most_recent_game():
                 return False
 
             return False
