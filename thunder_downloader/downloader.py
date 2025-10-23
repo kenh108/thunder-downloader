@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import time
 from selenium import webdriver
@@ -94,7 +95,7 @@ class ThunderDownloader:
                     self.is_thunder_game(href, text)):
                     self.logger.info(f"Found most recent game: {text}, navigating to: {href}")
                     self.driver.get(href)
-                    return True
+                    return href
 
             self.logger.error("No game links found")
             return False
@@ -191,15 +192,18 @@ class ThunderDownloader:
             self.logger.error(f"Error finding ok.ru video link: {e}")
             return False
 
-    def download_video(self, video_url):
-        """Download video using yt-dlp"""
+    def download_video(self, video_url, game_url):
+        """Download video using yt-dlp with filename from game URL"""
         try:
-            output_template = Config.get_output_template()
+            # Extract filename part from the game URL
+            filename = game_url.split('/')[-1]
+            output_template = os.path.join(Config.DOWNLOAD_DIR, f"{filename}.mp4")
+            
             cmd = [
                 'yt-dlp',
                 video_url,
                 '-o', output_template,
-                '--no_overwrites'
+                '--no-overwrites' 
             ]
 
             self.logger.info(f"Starting download: {' '.join(cmd)}")
@@ -224,7 +228,8 @@ class ThunderDownloader:
             if not self.find_thunder_games():
                 return False
             
-            if not self.find_most_recent_game():
+            game_url = self.find_most_recent_game()
+            if not game_url:
                 return False
 
             if not self.find_okru_hosted_recording():
@@ -234,7 +239,7 @@ class ThunderDownloader:
             if not video_url:
                 return False
 
-            return False
+            return self.download_video(video_url, game_url)
 
         except Exception as e:
             self.logger.error(f"Unexpected error in run method: {e}")
