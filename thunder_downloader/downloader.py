@@ -64,11 +64,8 @@ class ThunderDownloader:
                 if any(keyword in href.lower() or keyword in text
                     for keyword in Config.TEAM_KEYWORDS):
                     # Correct link is always first on page
-                    self.logger.info(f"Found Thunder page: {text} - {href}")
-
-                    # Navigate directly to URL
+                    self.logger.info(f"Found Thunder page: {text}, navigating to: {href}")
                     self.driver.get(href)
-                    self.logger.info(f"Successfully navigated to Thunder page")
                     return True
 
             self.logger.error("Thunder page not found")
@@ -95,10 +92,8 @@ class ThunderDownloader:
                 # Ensure this is valid game and Thunder game
                 if (self.is_actual_game(href, text) and
                     self.is_thunder_game(href, text)):
-                    self.logger.info(f"Found most recent game: {text} - {href}")
-
+                    self.logger.info(f"Found most recent game: {text}, navigating to: {href}")
                     self.driver.get(href)
-                    self.logger.info(f"Successfully navigated to most recent game page")
                     return True
 
             self.logger.error("No game links found")
@@ -137,54 +132,37 @@ class ThunderDownloader:
         return any(keyword in href_lower or keyword in text_lower
                     for keyword in Config.TEAM_KEYWORDS)
 
-
-    def get_stream_links(self):
-        """Get all stream links from the game page"""
+    def find_okru_hosted_link(self):
+        """Find and click the Watch button for the ok.ru hosted game recording"""
         try:
-            # Wait for page to load and find stream links
-            stream_links = WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
-                EC.presence_of_all_elements_located((By.TAG_NAME, "a"))
+            WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
+                EC.presence_of_element_located((By.TAG_NAME, "a"))
             )
 
-            # Filter for stream links (adjust selector as needed)
-            stream_urls = []
-            for link in stream_links:
-                href = link.get_attribute('href')
-                if href and ('stream' in href.lower() or 'video' in href.lower()):
-                    stream_urls.append(href)
+            # Find the paragraph that contains "(OK)" (meaning hosted by ok.ru)
+            ok_servers = self.driver.find_elements(By.XPATH, "//p[contains(., '(OK)')]")
 
-            self.logger.info(f"Found {len(stream_urls)} stream links")
-            return stream_urls
+            for server in ok_servers:
+                # Watch button is in the next <p> sibling element
+                next_p = server.find_element(By.XPATH, "./following-sibling::p[1]")
 
-        except TimeoutException:
-            self.logger.error("Timeout waiting for stream links")
-            return []
+                # Find the Watch link within this next paragraph
+                watch_links = next_p.find_elements(By.XPATH, ".//a[contains(., 'Watch')]")
 
-    def extract_okru_video_url(self, stream_url):
-        """Navigate to stream and extract ok.ru video URL"""
-        try:
-            self.logger.info(f"Navigating to stream: {stream_url}")
-            self.driver.get(stream_url)
+                if watch_links:
+                    watch_link = watch_links[0]
+                    href = watch_link.get_attribute('href')
+                    self.logger.info(f"Found OK.ru Watch button, navigating to: {href}")
+                    self.driver.get(href)
+                    return True
 
-            # Wait for video element or iframe
-            time.sleep(5) # Allow page to load
-
-            # Look for ok.ru video URLs in the page source or iframes
-            page_source = self.driver.page_source
-            okru_pattern = r'https?://(?:www\.)?ok\.ru/video/\d+'
-            matches = re.findall(okru_pattern, page_source)
-
-            if matches:
-                video_url = matches[0]
-                self.logger.info(f"Found ok.ru video URL: {video_url}")
-                return video_url
-
-            self.logger.error("No ok.ru video URL found in stream page")
-            return None
+            self.logger.error("No ok.ru Watch button found")
+            return False
 
         except Exception as e:
-            self.logger.error(f"Error extreacting ok.ru URL: {e}")
-            return None
+            self.logger.error(f"Error finding ok.ru Watch button: {e}")
+            return False
+        
 
     def download_video(self, video_url):
         """Download video using yt-dlp"""
@@ -222,6 +200,11 @@ class ThunderDownloader:
             
             # Find most recent game
             if not self.find_most_recent_game():
+                return False
+
+            # Find ok.ru link
+            video_url = self.find_okru_hosted_link()
+            if not video_url:
                 return False
 
             return False
