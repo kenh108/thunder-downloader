@@ -197,13 +197,12 @@ class ThunderDownloader:
         try:
             # Extract filename part from the game URL
             filename = game_url.split('/')[-1]
-            output_template = os.path.join(Config.DOWNLOAD_DIR, f"{filename}.mp4")
+            output_file = os.path.join(Config.DOWNLOAD_DIR, f"{filename}.mp4")
             
             cmd = [
                 'yt-dlp',
                 video_url,
-                '-o', output_template,
-                '--no-overwrites' 
+                '-o', output_file,
             ]
 
             self.logger.info(f"Starting download: {' '.join(cmd)}")
