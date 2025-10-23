@@ -1,0 +1,16 @@
+downloads/
+logs/
+*.mp4
+*.log
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.idea/
+.vscode/
+*.swp
+*.swo
