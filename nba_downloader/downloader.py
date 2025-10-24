@@ -47,8 +47,9 @@ class NBADownloader:
     def find_team_page(self):
         """Find and select the page for games of the configured team"""
         try:
-            self.logger.info(f"Navigating to {Config.BASE_URL}")
-            self.driver.get(Config.BASE_URL)
+            # Go to basketball-video.com
+            self.logger.info(f"Navigating to {Config.BASKETBALL_VIDEO_URL}")
+            self.driver.get(Config.BASKETBALL_VIDEO_URL)
 
             WebDriverWait(self.driver, Config.WEBDRIVER_TIMEOUT).until(
                 EC.presence_of_element_located((By.TAG_NAME, "a"))
@@ -181,7 +182,7 @@ class NBADownloader:
                 if 'ok.ru/videoembed' in src:
                     # Convert embed URL to direct video URL
                     video_id = src.split('/')[-1]
-                    video_url = f"https://ok.ru/video/{video_id}"
+                    video_url = f"{Config.OKRU_URL}/video/{video_id}"
                     self.logger.info(f"Found ok.ru video: {video_url}")
                     return video_url
 

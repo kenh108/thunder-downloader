@@ -3,8 +3,8 @@ from datetime import datetime
 
 class Config:
     # URLs
-    BASE_URL = "http://basketball-video.com"
-    VIDEO_HOST_URL = "https://ok.ru"
+    BASKETBALL_VIDEO_URL = "http://basketball-video.com"
+    OKRU_URL= "https://ok.ru"
 
     # Team configuration
     TEAM_NAME = "Oklahoma City Thunder"
