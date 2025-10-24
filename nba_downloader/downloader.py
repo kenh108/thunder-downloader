@@ -13,7 +13,7 @@ import re
 
 from .config import Config
 
-class ThunderDownloader:
+class NBADownloader:
     def __init__(self):
         self.driver = None
         self.setup_logging()
@@ -44,8 +44,8 @@ class ThunderDownloader:
         self.driver.implicitly_wait(Config.WEBDRIVER_TIMEOUT)
         self.logger.info("Browser setup complete")
 
-    def find_thunder_games(self):
-        """Find and click the page for Thunder games"""
+    def find_team_page(self):
+        """Find and select the page for games of the configured team"""
         try:
             self.logger.info(f"Navigating to {Config.BASE_URL}")
             self.driver.get(Config.BASE_URL)
@@ -54,26 +54,26 @@ class ThunderDownloader:
                 EC.presence_of_element_located((By.TAG_NAME, "a"))
             )
 
-            # Find link for Thunder page
+            # Find link for team page
             games_link = self.driver.find_elements(By.TAG_NAME, "a")
 
             for link in games_link:
                 href = link.get_attribute('href') or ""
                 text = link.text.lower()
 
-                # Check if this is related to Thunder
+                # Check if this is related to team
                 if any(keyword in href.lower() or keyword in text
                     for keyword in Config.TEAM_KEYWORDS):
                     # Correct link is always first on page
-                    self.logger.info(f"Found Thunder page, navigating to: {href}")
+                    self.logger.info(f"Found {Config.TEAM_NAME} page, navigating to: {href}")
                     self.driver.get(href)
                     return True
 
-            self.logger.error("Thunder page not found")
+            self.logger.error("{Config.TEAM_NAME} page not found")
             return False
 
         except Exception as e:
-            self.logger.error(f"Error finding Thunder page: {e}")
+            self.logger.error(f"Error finding {Config.TEAM_NAME} page: {e}")
             return False
 
     def find_most_recent_game(self):
@@ -90,9 +90,9 @@ class ThunderDownloader:
                 href = link.get_attribute('href') or ""
                 text = link.text.strip()
 
-                # Ensure this is valid game and Thunder game
+                # Ensure this is valid game and team game
                 if (self.is_actual_game(href, text) and
-                    self.is_thunder_game(href, text)):
+                    self.is_team_game(href, text)):
                     self.logger.info(f"Found most recent game: {text}, navigating to: {href}")
                     self.driver.get(href)
                     return href
@@ -121,15 +121,15 @@ class ThunderDownloader:
 
         return is_game_page
 
-    def is_thunder_game(self, href, text):
-        """Check if link is for a Thunder game"""
+    def is_team_game(self, href, text):
+        """Check if link is for a game of the configured team"""
         if not href or not text:
             return False
 
         href_lower = href.lower()
         text_lower = text.lower()
 
-        # Check for Thunder keywords in the game link
+        # Check for team keywords in the game link
         return any(keyword in href_lower or keyword in text_lower
                     for keyword in Config.TEAM_KEYWORDS)
 
@@ -153,7 +153,7 @@ class ThunderDownloader:
                 if watch_links:
                     watch_link = watch_links[0]
                     href = watch_link.get_attribute('href')
-                    self.logger.info(f"Found OK.ru Watch button, navigating to: {href}")
+                    self.logger.info(f"Found ok.ru Watch button, navigating to: {href}")
                     self.driver.get(href)
                     return True
 
@@ -208,7 +208,11 @@ class ThunderDownloader:
             self.logger.info(f"Starting download: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
-            self.logger.info("Download completed successfully")
+            if "has already been downloaded" in result.stdout:
+                self.logger.info("File is already downloaded")
+            else:
+                self.logger.info("Download completed successfully")
+
             self.logger.debug(f"yt-dlp output: {result.stdout}")
             return True
 
@@ -219,12 +223,10 @@ class ThunderDownloader:
 
     def run(self):
         """Main execution method"""
-        self.logger.info("Starting Thunder game download process")
-
         try:
             self.setup_browser()
 
-            if not self.find_thunder_games():
+            if not self.find_team_page():
                 return False
             
             game_url = self.find_most_recent_game()

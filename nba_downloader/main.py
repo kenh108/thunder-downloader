@@ -2,7 +2,7 @@ import logging
 import time
 import schedule
 from datetime import datetime
-from .downloader import ThunderDownloader
+from .downloader import NBADownloader
 from .config import Config
 
 def setup_logging():
@@ -17,27 +17,27 @@ def setup_logging():
     )
 
 def job():
-    """Scheduled job to check for and download Thunder games"""
+    """Scheduled job to download new NBA games"""
     logger = logging.getLogger(__name__)
-    logger.info("=== Starting Thunder game check ===")
+    logger.info(f"=== Starting NBA game check ===")
 
-    downloader = ThunderDownloader()
+    downloader = NBADownloader()
     success = downloader.run()
 
     if success:
-        logger.info("Thunder game download completed successfully")
+        logger.info(f"Most recent {Config.TEAM_NAME} game is downloaded")
     else:
-        logger.info("No game downloaded or download failed")
+        logger.info("Most recent {Config.TEAM_NAME} game is not downloaded or download failed")
 
-    logger.info("=== Thunder game check completed ===\n")
+    logger.info("=== NBA game check completed ===\n")
 
 def main():
     """Main application entry point"""
     setup_logging()
     logger = logging.getLogger(__name__)
 
-    logger.info("Thunder Downloader started")
-    logger.info(f"Checking for new games every {Config.CHECK_INTERVAL_MINUTES} minutes")
+    logger.info("NBA Downloader started")
+    logger.info(f"Checking for the most recent {Config.TEAM_NAME} game every {Config.CHECK_INTERVAL_MINUTES} minutes")
 
     # Schedule the job
     schedule.every(Config.CHECK_INTERVAL_MINUTES).minutes.do(job)
@@ -51,11 +51,11 @@ def main():
             schedule.run_pending()
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("Thunder Downloader stopped by user")
+        logger.info("NBA Downloader stopped by user")
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
     finally:
-        logger.info("Thunder Downloader shutdown complete")
+        logger.info("NBA Downloader shutdown complete")
 
 if __name__ == "__main__":
     main()
