@@ -6,19 +6,13 @@ class Config:
     BASKETBALL_VIDEO_URL = "http://basketball-video.com"
     OKRU_URL= "https://ok.ru"
 
-    # Team configuration
-    TEAM_NAME = "Oklahoma City Thunder"
-    TEAM_SLUG = "oklahoma-city-thunder"
-    TEAM_KEYWORDS = [
-        "thunder",
-        "oklahoma city thunder",
-        "oklahoma-city-thunder",
-        "okc",
-        "oklahoma"
-    ]
+    # Team configuration with env variable fallbacks
+    TEAM_NAME = os.getenv('NBA_TEAM_NAME', "Oklahoma City Thunder")
+    TEAM_SLUG = os.getenv('NBA_TEAM_SLUG', "oklahoma-city-thunder")
+    TEAM_KEYWORDS = os.getenv('NBA_TEAM_KEYWORDS', "thunder,oklahoma city thunder,oklahoma-city-thunder,okc,oklahoma").split(",")
 
     # Scheduling
-    CHECK_INTERVAL_MINUTES = 15
+    CHECK_INTERVAL_MINUTES = int(os.getenv('NBA_CHECK_INTERVAL', 15))
 
     # Download paths
     DOWNLOAD_DIR = "/app/downloads"

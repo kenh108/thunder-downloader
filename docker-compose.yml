@@ -8,3 +8,9 @@ services:
       - ./logs:/app/logs
     environment:
       - TZ=Europe/Dublin
+      # Team configuration
+      - NBA_TEAM_NAME=Oklahoma City Thunder
+      - NBA_TEAM_SLUG=oklahoma-city-thunder
+      - NBA_TEAM_KEYWORDS=thunder,oklahoma city thunder,oklahoma-city-thunder,okc,oklahoma
+      # Scheduling
+      - NBA_CHECK_INTERVAL=1
