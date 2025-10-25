@@ -12,11 +12,20 @@ from urllib.parse import urljoin
 import re
 
 from .config import Config
+from .telegram_notifier import TelegramNotifier
+
+from enum import Enum, auto
+
+class DownloadStatus(Enum):
+    NEW_DOWNLOAD = auto()
+    ALREADY_EXISTS = auto()
+    FAILED = auto()
 
 class NBADownloader:
     def __init__(self):
         self.driver = None
         self.logger = logging.getLogger(__name__)
+        self.notifier = TelegramNotifier()
 
     def setup_browser(self):
         """Setup Chrome browser with options"""
@@ -82,9 +91,10 @@ class NBADownloader:
                 # Ensure this is valid game and team game
                 if (self.is_actual_game(href, text) and
                     self.is_team_game(href, text)):
+                    game_name = href.split('/')[-1]
                     self.logger.info(f"Found most recent game: {text}, navigating to: {href}")
                     self.driver.get(href)
-                    return href
+                    return game_name
 
             self.logger.error("No game links found")
             return False
@@ -181,11 +191,11 @@ class NBADownloader:
             self.logger.error(f"Error finding ok.ru video link: {e}")
             return False
 
-    def download_video(self, video_url, game_url):
+    def download_video(self, video_url, game_name):
         """Download video using yt-dlp with filename from game URL"""
         try:
             # Extract filename part from the game URL
-            filename = game_url.split('/')[-1]
+            filename = game_name
             output_file = os.path.join(Config.DOWNLOAD_DIR, f"{filename}.mp4")
             
             cmd = [
@@ -199,8 +209,10 @@ class NBADownloader:
 
             if "has already been downloaded" in result.stdout:
                 self.logger.info("File is already downloaded")
+                return DownloadStatus.ALREADY_EXISTS
             else:
                 self.logger.info("Download completed successfully")
+                return DownloadStatus.NEW_DOWNLOAD
 
             self.logger.debug(f"yt-dlp output: {result.stdout}")
             return True
@@ -208,7 +220,7 @@ class NBADownloader:
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Download failed: {e}")
             self.logger.error(f"yt-dlp stderr: {e.stderr}")
-            return False
+            return DownloadStatus.FAILED
 
     def run(self):
         """Main execution method"""
@@ -218,8 +230,8 @@ class NBADownloader:
             if not self.find_team_page():
                 return False
             
-            game_url = self.find_most_recent_game()
-            if not game_url:
+            game_name = self.find_most_recent_game()
+            if not game_name:
                 return False
 
             if not self.find_okru_hosted_recording():
@@ -229,7 +241,12 @@ class NBADownloader:
             if not video_url:
                 return False
 
-            return self.download_video(video_url, game_url)
+            download_status = self.download_video(video_url, game_name)
+
+            if download_status == DownloadStatus.NEW_DOWNLOAD:
+                self.notifier.game_downloaded(game_name)
+
+            return download_status != DownloadStatus.FAILED
 
         except Exception as e:
             self.logger.error(f"Unexpected error in run method: {e}")

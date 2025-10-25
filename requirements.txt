@@ -3,3 +3,4 @@ beautifulsoup4==4.12.2
 requests==2.31.0
 yt-dlp==2023.11.16
 schedule==1.2.0
+python-telegram-bot==20.7

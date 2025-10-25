@@ -31,7 +31,7 @@ def job():
     if success:
         logger.info(f"Most recent {Config.TEAM_NAME} game is downloaded")
     else:
-        logger.info("Most recent {Config.TEAM_NAME} game is not downloaded or download failed")
+        logger.info(f"Most recent {Config.TEAM_NAME} game is not downloaded or download failed")
 
     logger.info("=== NBA game check completed ===\n")
 

@@ -21,3 +21,8 @@ class Config:
     # Browser settings
     WEBDRIVER_TIMEOUT = 30
     HEADLESS_BROWSER = True
+
+    # Telegram Bot configuration
+    TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+    TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+    TELEGRAM_ENABLED = os.getenv('TELEGRAM_ENABLED', 'false').lower() == 'true'
