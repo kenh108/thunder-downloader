@@ -1,7 +1,7 @@
 services:
-  thunder-downloader:
+  nba-downloader:
     build: .
-    container_name: thunder-downloader
+    container_name: nba-downloader
     restart: unless-stopped
     volumes:
       - ./downloads:/app/downloads
