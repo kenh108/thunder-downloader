@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import schedule
 from datetime import datetime
@@ -7,11 +8,14 @@ from .config import Config
 
 def setup_logging():
     """Setup application-wide logging"""
+    date_str = datetime.now().strftime("%Y%m%d")
+    log_file = os.path.join(Config.LOG_DIR, f"nba_downloader_{date_str}.log")
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(Config.get_log_file()),
+            logging.FileHandler(log_file),
             logging.StreamHandler()
         ]
     )

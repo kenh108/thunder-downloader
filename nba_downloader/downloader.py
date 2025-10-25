@@ -16,18 +16,6 @@ from .config import Config
 class NBADownloader:
     def __init__(self):
         self.driver = None
-        self.setup_logging()
-
-    def setup_logging(self):
-        """Setup logging configuration"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(Config.get_log_file()),
-                logging.StreamHandler()
-            ]
-        )
         self.logger = logging.getLogger(__name__)
 
     def setup_browser(self):
