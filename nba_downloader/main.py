@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-import schedule
+import threading
 from datetime import datetime
 from .downloader import NBADownloader
 from .config import Config
@@ -35,6 +35,17 @@ def job():
 
     logger.info("=== NBA game check completed ===\n")
 
+def schedule_next_job():
+    """Schedule the next job to run after CHECK_INTERVAL_MINUTES"""
+    timer = threading.Timer(Config.CHECK_INTERVAL_MINUTES * 60, run_job_sequence)
+    timer.daemon = True
+    timer.start()
+
+def run_job_sequence():
+    """Run job and schedule the next one"""
+    job()
+    schedule_next_job()
+
 def main():
     """Main application entry point"""
     setup_logging()
@@ -43,16 +54,12 @@ def main():
     logger.info("NBA Downloader started")
     logger.info(f"Checking for the most recent {Config.TEAM_NAME} game every {Config.CHECK_INTERVAL_MINUTES} minutes")
 
-    # Schedule the job
-    schedule.every(Config.CHECK_INTERVAL_MINUTES).minutes.do(job)
-
     # Run immediately on startup
-    job()
+    run_job_sequence()
 
     # Keep the script running
     try:
         while True:
-            schedule.run_pending()
             time.sleep(1)
     except KeyboardInterrupt:
         logger.info("NBA Downloader stopped by user")

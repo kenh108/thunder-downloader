@@ -17,20 +17,13 @@ class Config:
         "oklahoma"
     ]
 
+    # Scheduling
+    CHECK_INTERVAL_MINUTES = 15
+
     # Download paths
     DOWNLOAD_DIR = "/app/downloads"
     LOG_DIR = "/app/logs"
 
-    # Scheduling
-    CHECK_INTERVAL_MINUTES = 15
-
     # Browser settings
     WEBDRIVER_TIMEOUT = 30
     HEADLESS_BROWSER = True
-
-
-    @staticmethod
-    def get_log_file():
-        """Generate log file path with timestamp"""
-        date_str = datetime.now().strftime("%Y%m%d")
-        return os.path.join(Config.LOG_DIR, f"thunder_downloader_{date_str}.log")
