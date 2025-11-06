@@ -3,7 +3,7 @@ from datetime import datetime
 
 class Config:
     # URLs
-    BASKETBALL_VIDEO_URL = "http://basketball-video.com"
+    BASKETBALL_VIDEO_URL = "https://basketball-video.com"
     OKRU_URL= "https://ok.ru"
 
     # Team configuration with env variable fallbacks

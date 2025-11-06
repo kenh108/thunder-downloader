@@ -1,5 +1,6 @@
 import logging
 import os
+import socket
 import subprocess
 import time
 from selenium import webdriver
@@ -8,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import re
 
 from .config import Config
@@ -40,6 +41,21 @@ class NBADownloader:
         self.driver = webdriver.Chrome(options=chrome_options)
         self.driver.implicitly_wait(Config.WEBDRIVER_TIMEOUT)
         self.logger.info("Browser setup complete")
+
+    def check_dns_resolution(self):
+        """Check if basketball-video.com can be resolved via DNS"""
+        try:
+            # Extract hostname from URL
+            hostname = urlparse(Config.BASKETBALL_VIDEO_URL).hostname
+            socket.gethostbyname(hostname)
+            self.logger.info(f"DNS resolution for {hostname} is successful")
+            return True
+        except socket.gaierror as e:
+            self.logger.error(f"DNS resolution for {hostname}  failed: {e}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Unexpected error during DNS check: {e}")
+            return False
 
     def find_team_page(self):
         """Find and select the page for games of the configured team"""
@@ -226,6 +242,9 @@ class NBADownloader:
         """Main execution method"""
         try:
             self.setup_browser()
+
+            if not self.check_dns_resolution():
+                return False
 
             if not self.find_team_page():
                 return False
